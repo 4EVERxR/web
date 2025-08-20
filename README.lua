@@ -3,9 +3,12 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:WaitForChild("Backpack")
 
+local targetPets = _G.TargetPets or {}
+local webhookURL = WebhookURL
+
 local function countTargetPets()
     local petCounts = {}
-    for _, petName in ipairs(_G.TargetPets) do
+    for _, petName in ipairs(targetPets) do
         petCounts[petName] = 0
     end
 
@@ -44,7 +47,7 @@ local function sendWebhook()
 
     pcall(function()
         request({
-            Url = WebhookURL,
+            Url = webhookURL,
             Method = "POST",
             Headers = { ["Content-Type"] = "application/json" },
             Body = HttpService:JSONEncode(data)
