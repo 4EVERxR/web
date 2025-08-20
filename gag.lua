@@ -1,3 +1,5 @@
+-- Losting เวอร์ชันตรวจสอบสัตว์และส่ง Webhook
+
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
@@ -20,10 +22,6 @@ end
 -- นับสัตว์ตาม _G.TargetPets
 local function countTargetPets()
     local petCounts = {}
-    if type(_G.TargetPets) ~= "table" then
-        _G.TargetPets = {}
-    end
-
     for _, name in ipairs(_G.TargetPets) do
         petCounts[name] = 0
     end
@@ -40,21 +38,25 @@ end
 
 -- ส่ง Webhook
 local function sendWebhook()
-    if type(_G.WebhookURL) ~= "string" then return end
-
     local counts = countTargetPets()
     local petList = ""
+    local hasPet = false
+
     for name, count in pairs(counts) do
+        if count > 0 then hasPet = true end
         petList = petList .. name .. " x" .. tostring(count) .. "\n"
+        print("ตรวจเจอ:", name, "จำนวน:", count)
     end
-    if petList == "" then
+
+    if not hasPet then
         petList = "No selected pets found."
+        print(petList)
     end
 
     local data = {
         content = nil,
         embeds = {{
-            color = 3447003,
+            color = 3447003, -- สีฟ้า
             fields = {
                 { name = " ⚠️  Name :", value = "`" .. LocalPlayer.Name .. "`" },
                 { name = " 🧺  Show Pets :", value = "`" .. petList .. "`" }
@@ -72,6 +74,7 @@ local function sendWebhook()
                 Headers = { ["Content-Type"] = "application/json" },
                 Body = HttpService:JSONEncode(data)
             })
+            print("ส่ง Webhook เรียบร้อย")
         end)
     end
 end
