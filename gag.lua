@@ -1,34 +1,46 @@
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:WaitForChild("Backpack")
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 
-local targetPets = _G.TargetPets or {}
-local webhookURL = WebhookURL
+-- ฟังก์ชันเก็บสัตว์ทั้งหมดจาก Backpack + Character
+local function getAllPets()
+    local pets = {}
+    for _, item in ipairs(Backpack:GetChildren()) do
+        table.insert(pets, item)
+    end
+    for _, item in ipairs(Character:GetChildren()) do
+        table.insert(pets, item)
+    end
+    return pets
+end
 
+-- นับสัตว์ตาม _G.TargetPets
 local function countTargetPets()
     local petCounts = {}
-    for _, petName in ipairs(targetPets) do
-        petCounts[petName] = 0
+    for _, name in ipairs(_G.TargetPets) do
+        petCounts[name] = 0
     end
 
-    for _, item in ipairs(Backpack:GetChildren()) do
-        local baseName = item.Name:match("^(.-) %[") or item.Name
-        if petCounts[baseName] ~= nil then
-            petCounts[baseName] = petCounts[baseName] + 1
+    for _, item in ipairs(getAllPets()) do
+        for _, target in ipairs(_G.TargetPets) do
+            if item.Name:find(target) then
+                petCounts[target] = petCounts[target] + 1
+            end
         end
     end
-
     return petCounts
 end
 
+-- ส่ง Webhook
 local function sendWebhook()
     local counts = countTargetPets()
     local petList = ""
-    for petName, count in pairs(counts) do
-        petList = petList .. petName .. " x" .. tostring(count) .. "\n"
+    for name, count in pairs(counts) do
+        petList = petList .. name .. " x" .. tostring(count) .. "\n"
     end
-
     if petList == "" then
         petList = "No selected pets found."
     end
@@ -45,14 +57,20 @@ local function sendWebhook()
         attachments = {}
     }
 
-    pcall(function()
-        HttpService:PostAsync(webhookURL, HttpService:JSONEncode(data), Enum.HttpContentType.ApplicationJson)
-    end)
+    local requestFunc = http_request or request or (syn and syn.request)
+    if WebhookURL and typeof(requestFunc) == "function" then
+        pcall(function()
+            requestFunc({
+                Url = WebhookURL,
+                Method = "POST",
+                Headers = { ["Content-Type"] = "application/json" },
+                Body = HttpService:JSONEncode(data)
+            })
+        end)
+    end
 end
 
-sendWebhook() -- ส่งครั้งแรก
+sendWebhook()
 
--- ฟังก์ชันส่งอัตโนมัติเมื่อ Backpack มีสัตว์ใหม่เข้ามา
-Backpack.ChildAdded:Connect(function()
-    sendWebhook()
-end)
+Backpack.ChildAdded:Connect(sendWebhook)
+Character.ChildAdded:Connect(sendWebhook)
