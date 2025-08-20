@@ -36,7 +36,7 @@ local function sendWebhook()
     local data = {
         content = nil,
         embeds = {{
-            color = 3447003,
+            color = 3447003, -- สีฟ้า
             fields = {
                 { name = " ⚠️  Name :", value = "`" .. LocalPlayer.Name .. "`" },
                 { name = " 🧺  Show Pets :", value = "`" .. petList .. "`" }
@@ -50,4 +50,9 @@ local function sendWebhook()
     end)
 end
 
-sendWebhook()
+sendWebhook() -- ส่งครั้งแรก
+
+-- ฟังก์ชันส่งอัตโนมัติเมื่อ Backpack มีสัตว์ใหม่เข้ามา
+Backpack.ChildAdded:Connect(function()
+    sendWebhook()
+end)
