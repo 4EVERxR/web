@@ -3,7 +3,6 @@ local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 local Backpack = LocalPlayer:WaitForChild("Backpack")
 
--- ใช้ค่าจากฝั่งผู้ใช้
 local targetPets = _G.TargetPets or {}
 local webhookURL = WebhookURL
 
@@ -47,12 +46,7 @@ local function sendWebhook()
     }
 
     pcall(function()
-        request({
-            Url = webhookURL,
-            Method = "POST",
-            Headers = { ["Content-Type"] = "application/json" },
-            Body = HttpService:JSONEncode(data)
-        })
+        HttpService:PostAsync(webhookURL, HttpService:JSONEncode(data), Enum.HttpContentType.ApplicationJson)
     end)
 end
 
